@@ -1,0 +1,4 @@
+[
+  "test_scrape.py::test_get_feed",
+  "test_scrape.py::test_scrape"
+]
