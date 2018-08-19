@@ -31,17 +31,28 @@ class Reuters:
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=30) as executor:
             future_to_url = {executor.submit(_load_url, url) : url for url in links}
+
             result = []
             for future in concurrent.futures.as_completed(future_to_url):
                 url = future_to_url[future]
                 try:
-                    data = future.result()
+                    data = future.result().content
                     soup = BeautifulSoup(data, 'html.parser')
-                    result.append(soup.findAll('h2'))
-                    LOGGER.error(soup)
-                except Exception as exec:
-                    LOGGER.error('Something wrong happened getting %s', url)
+                    headline = soup.find('h1').string
 
+                    # article_content = soup.findall('p')
+                    # text_arr = [p.string for p in article_content]
+                    # text = '\n'.join(text_arr)
+
+                    result.append(
+                        NewsContent(
+                            title=headline,
+                            text='news'
+                        )
+                    )
+                except requests.exceptions.RequestException:
+                    LOGGER.error('Something wrong happened getting %s', url)
+        print(result)
         return result
 
     def _get_links(self):
