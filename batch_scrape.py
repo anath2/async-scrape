@@ -5,22 +5,9 @@ from collections import namedtuple
 from bs4 import BeautifulSoup
 import feedparser
 
+
 NewsContent = namedtuple('NewsContent', 'title, text')
 LOGGER = logging.getLogger(__name__)
-
-
-def get_news_from_page(data: str) -> NewsContent:
-    '''Get news from a reuters page'''
-    soup = BeautifulSoup(data, 'html.parser')
-    headline = soup.find('h1').string
-    article_content = soup.find_all('p')
-    text_arr = [p.string for p in article_content if p.string is not None]
-    text = '.'.join(text_arr)
-    news_content = NewsContent(
-        title=headline,
-        text=text
-    )
-    return news_content
 
 
 class Reuters:
@@ -44,11 +31,10 @@ class Reuters:
         links = self._get_links()
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=30) as executor:
-            future_to_url = {executor.submit(_load_url, url) : url for url in links}
+            futures = [executor.submit(_load_url, url) for url in links]
 
             result = []
-            for future in concurrent.futures.as_completed(future_to_url):
-                url = future_to_url[future]
+            for future in concurrent.futures.as_completed(futures):
                 try:
                     data = future.result().content
                 except requests.exceptions.RequestException:
@@ -63,3 +49,17 @@ class Reuters:
         feed = self.get_feed()
         links = set([f.link for f in feed])
         return links
+
+
+def get_news_from_page(data: str) -> NewsContent:
+    '''Get news from a reuters page'''
+    soup = BeautifulSoup(data, 'html.parser')
+    headline = soup.find('h1').string
+    article_content = soup.find_all('p')
+    text_arr = [p.string for p in article_content if p.string is not None]
+    text = '.'.join(text_arr)
+    news_content = NewsContent(
+        title=headline,
+        text=text
+    )
+    return news_content

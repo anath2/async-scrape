@@ -15,4 +15,5 @@ def test_get_feed(reuters):
 def test_scrape(reuters):
     scraped = reuters.scrape()
     assert isinstance(scraped, list)
+    assert len(scraped) > 0
     assert all(isinstance(f, NewsContent) for f in scraped)
